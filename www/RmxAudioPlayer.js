@@ -12,7 +12,9 @@ exports.default = exports.AudioPlayer = exports.RmxAudioPlayer = void 0;
 
 var _Constants = require("./Constants");
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -33,93 +35,10 @@ var itemStatusChangeTypes = [_Constants.RmxAudioStatusMessage.RMXSTATUS_PLAYBACK
  * separate onStatus callback streams.
  */
 
-var RmxAudioPlayer =
-/*#__PURE__*/
-function () {
-  _createClass(RmxAudioPlayer, [{
-    key: "currentState",
-
-    /**
-     * The current summarized state of the player, as a string. It is preferred that you use the 'isX' accessors,
-     * because they properly interpret the range of these values, but this field is exposed if you wish to observe
-     * or interrogate it.
-     */
-    get: function get() {
-      return this._currentState;
-    }
-    /**
-     * True if the plugin has been initialized. You'll likely never see this state; it is handled internally.
-     */
-
-  }, {
-    key: "isInitialized",
-    get: function get() {
-      return this._inititialized;
-    }
-  }, {
-    key: "currentTrack",
-    get: function get() {
-      return this._currentItem;
-    }
-    /**
-     * If the playlist is currently playling a track.
-     */
-
-  }, {
-    key: "isPlaying",
-    get: function get() {
-      return this._currentState === 'playing';
-    }
-    /**
-     * True if the playlist is currently paused
-     */
-
-  }, {
-    key: "isPaused",
-    get: function get() {
-      return this._currentState === 'paused' || this._currentState === 'stopped';
-    }
-    /**
-     * True if the plugin is currently loading its *current* track.
-     * On iOS, many tracks are loaded in parallel, so this only reports for the *current item*, e.g.
-     * the item that will begin playback if you press pause.
-     * If you need track-specific data, it is better to watch the onStatus stream and watch for RMXSTATUS_LOADING,
-     * which will be raised independently & simultaneously for every track in the playlist.
-     * On Android, tracks are only loaded as they begin playback, so this value and RMXSTATUS_LOADING should always
-     * apply to the same track.
-     */
-
-  }, {
-    key: "isLoading",
-    get: function get() {
-      return this._currentState === 'loading';
-    }
-    /**
-     * True if the *currently playing track* has been loaded and can be played (this includes if it is *currently playing*).
-     */
-
-  }, {
-    key: "hasLoaded",
-    get: function get() {
-      return this._hasLoaded;
-    }
-    /**
-     * True if the *current track* has reported an error. In almost all cases,
-     * the playlist will automatically skip forward to the next track, in which case you will also receive
-     * an RMXSTATUS_TRACK_CHANGED event.
-     */
-
-  }, {
-    key: "hasError",
-    get: function get() {
-      return this._hasError;
-    }
-    /**
-     * Creates a new RmxAudioPlayer instance.
-     */
-
-  }]);
-
+var RmxAudioPlayer = /*#__PURE__*/function () {
+  /**
+   * Creates a new RmxAudioPlayer instance.
+   */
   function RmxAudioPlayer() {
     var _this = this;
 
@@ -187,7 +106,7 @@ function () {
     });
 
     _defineProperty(this, "setOptions", function (successCallback, errorCallback, options) {
-      _this.options = _objectSpread({}, _this.options, options);
+      _this.options = _objectSpread(_objectSpread({}, _this.options), options);
       exec(successCallback, errorCallback, 'RmxAudioPlayer', 'setOptions', [options]);
     });
 
@@ -330,8 +249,86 @@ function () {
 
 
   _createClass(RmxAudioPlayer, [{
-    key: "onStatus",
+    key: "currentState",
+    get:
+    /**
+     * The current summarized state of the player, as a string. It is preferred that you use the 'isX' accessors,
+     * because they properly interpret the range of these values, but this field is exposed if you wish to observe
+     * or interrogate it.
+     */
+    function get() {
+      return this._currentState;
+    }
+    /**
+     * True if the plugin has been initialized. You'll likely never see this state; it is handled internally.
+     */
 
+  }, {
+    key: "isInitialized",
+    get: function get() {
+      return this._inititialized;
+    }
+  }, {
+    key: "currentTrack",
+    get: function get() {
+      return this._currentItem;
+    }
+    /**
+     * If the playlist is currently playling a track.
+     */
+
+  }, {
+    key: "isPlaying",
+    get: function get() {
+      return this._currentState === 'playing';
+    }
+    /**
+     * True if the playlist is currently paused
+     */
+
+  }, {
+    key: "isPaused",
+    get: function get() {
+      return this._currentState === 'paused' || this._currentState === 'stopped';
+    }
+    /**
+     * True if the plugin is currently loading its *current* track.
+     * On iOS, many tracks are loaded in parallel, so this only reports for the *current item*, e.g.
+     * the item that will begin playback if you press pause.
+     * If you need track-specific data, it is better to watch the onStatus stream and watch for RMXSTATUS_LOADING,
+     * which will be raised independently & simultaneously for every track in the playlist.
+     * On Android, tracks are only loaded as they begin playback, so this value and RMXSTATUS_LOADING should always
+     * apply to the same track.
+     */
+
+  }, {
+    key: "isLoading",
+    get: function get() {
+      return this._currentState === 'loading';
+    }
+    /**
+     * True if the *currently playing track* has been loaded and can be played (this includes if it is *currently playing*).
+     */
+
+  }, {
+    key: "hasLoaded",
+    get: function get() {
+      return this._hasLoaded;
+    }
+    /**
+     * True if the *current track* has reported an error. In almost all cases,
+     * the playlist will automatically skip forward to the next track, in which case you will also receive
+     * an RMXSTATUS_TRACK_CHANGED event.
+     */
+
+  }, {
+    key: "hasError",
+    get: function get() {
+      return this._hasError;
+    }
+  }, {
+    key: "onStatus",
+    value:
     /**
      * Status event handling
      */
@@ -341,7 +338,7 @@ function () {
      * Call this function to emit an onStatus event via the on('status') handler.
      * Internal use only, to raise events received from the native interface.
      */
-    value: function onStatus(trackId, type, value) {
+    function onStatus(trackId, type, value) {
       var status = {
         type,
         trackId,
@@ -454,11 +451,11 @@ function () {
 
   }, {
     key: "generateUUID",
-
+    value:
     /**
      * Generate a v4 UUID for use as a unique trackId. Used internally, but you can use this to generate track ID's if you want.
      */
-    value: function generateUUID() {
+    function generateUUID() {
       // Doesn't need to be perfect or secure, just good enough to give each item an ID.
       var d = new Date().getTime();
 
