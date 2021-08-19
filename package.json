@@ -22,6 +22,7 @@
     ]
   },
   "scripts": {
+    "version": "sync-pkg-version --cordova-plugin",
     "build": "npm run lint && npx browserslist && tsc --emitDeclarationOnly && babel src/js --out-dir www --extensions \".ts,.tsx\"",
     "build:watch": "nodemon -w ./src/js -e js -x npm run build",
     "precommit-msg": "echo 'Pre-commit checks... make sure you built!!' && exit 0",
@@ -84,6 +85,7 @@
     "jasmine-node": "^1.14.5",
     "nodemon": "^1.17.2",
     "pluginpub": "^0.0.9",
+    "sync-package-version": "^0.1.1",
     "typescript": "^2.8.1"
   }
 }
