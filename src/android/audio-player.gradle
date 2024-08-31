@@ -11,8 +11,8 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer-smoothstreaming:2.18.7"
     implementation "com.google.android.exoplayer:extension-mediasession:2.18.7"
 
-    // ExoMedia
-    implementation "com.devbrackets.android:exomedia:5.1.0"
+    // // ExoMedia
+    // implementation "com.devbrackets.android:exomedia:5.1.0"
 
     // PlaylistCore
     implementation "com.devbrackets.android:playlistcore:2.2.0"
