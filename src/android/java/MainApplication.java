@@ -1,32 +1,34 @@
-package __PACKAGE_NAME__;
+package com.teyuto.base;
 
 import android.app.Application;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.devbrackets.android.exomedia.ExoMedia;
-import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
-import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
-import okhttp3.OkHttpClient;
+import com.google.android.exoplayer2.util.Util;
 
 import com.rolamix.plugins.audioplayer.manager.PlaylistManager;
+
+import java.io.File;
 
 public class MainApplication extends Application {
     @Nullable
     private PlaylistManager playlistManager;
+    private Cache downloadCache;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         playlistManager = new PlaylistManager(this);
-        configureExoMedia();
+        configureExoPlayer();
     }
 
     @Nullable
@@ -34,22 +36,27 @@ public class MainApplication extends Application {
         return playlistManager;
     }
 
-    private void configureExoMedia() {
-        // Registers the media sources to use the OkHttp client instead of the standard Apache one
-        // Note: the OkHttpDataSourceFactory can be found in the ExoPlayer extension library `extension-okhttp`
-        ExoMedia.setDataSourceFactoryProvider(new ExoMedia.DataSourceFactoryProvider() {
-            @NonNull
-            @Override
-            public DataSource.Factory provide(@NonNull String userAgent, @Nullable TransferListener listener) {
-                // Updates the network data source to use the OKHttp implementation and allows it to follow redirects
-                OkHttpClient httpClient = new OkHttpClient().newBuilder().followRedirects(true).followSslRedirects(true).build();
-                DataSource.Factory upstreamFactory = new OkHttpDataSourceFactory(httpClient, userAgent, listener);
+    private void configureExoPlayer() {
+        String userAgent = Util.getUserAgent(this, "YourAppName");
+        HttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
+                .setUserAgent(userAgent)
+                .setAllowCrossProtocolRedirects(true);
 
-                // Adds a cache around the upstreamFactory.
-                // This sets a cache of 100MB, we might make this configurable.
-                Cache cache = new SimpleCache(getCacheDir(), new LeastRecentlyUsedCacheEvictor(100 * 1024 * 1024));
-                return new CacheDataSourceFactory(cache, upstreamFactory, CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
-            }
-        });
+        // Create a default DataSource.Factory which combines the cache and the http data source
+        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, httpDataSourceFactory);
+
+        // Create and set up cache
+        if (downloadCache == null) {
+            File cacheDir = new File(getCacheDir(), "media");
+            downloadCache = new SimpleCache(cacheDir, new NoOpCacheEvictor(), null);
+        }
+
+        // Wrap the default DataSource.Factory in a CacheDataSource.Factory
+        CacheDataSource.Factory cacheDataSourceFactory = new CacheDataSource.Factory()
+                .setCache(downloadCache)
+                .setUpstreamDataSourceFactory(dataSourceFactory)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
+
+        // Use this cacheDataSourceFactory when creating your ExoPlayer instance
     }
 }

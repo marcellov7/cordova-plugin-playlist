@@ -4,7 +4,7 @@ import com.rolamix.plugins.audioplayer.data.AudioTrack;
 import com.rolamix.plugins.audioplayer.manager.PlaylistManager;
 import com.rolamix.plugins.audioplayer.notification.PlaylistNotificationProvider;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.app.Service;
 import android.content.Context;
 import android.util.Log;
@@ -23,7 +23,6 @@ import com.devbrackets.android.playlistcore.components.playlisthandler.DefaultPl
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.PlaybackException;
 
 public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylistManager<I>>
             extends DefaultPlaylistHandler<I, M> implements Player.Listener {
@@ -54,31 +53,24 @@ public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylist
     }
 
     @Override
-    public void onPlayerError(PlaybackException error) {
+    public void onPlayerError(com.google.android.exoplayer2.PlaybackException error) {
         ((PlaylistManager)getPlaylistManager()).setCurrentErrorTrack(getCurrentPlaylistItem());
         int currentIndex = getPlaylistManager().getCurrentPosition();
         int currentErrorCount = getSequentialErrors();
 
         super.onPlayerError(error);
         // Do not set startPaused to false if we are at the first item.
-        // For all other items, the user MUST have triggered playback;
-        // for item 0, they will never have done so at this point (since the tracks
-        // are auto-buffered when a list is loaded).
-        // This is a bit of a guess. What happens of tracks 2,3,4 are also broken?
-        // User has no network? The only way to be *certain* is to capture all user interaction
-        // input points and create a global flag "somewhere" that says the user has tried to play.
-        // Maintaining that would be a nightmare.
         if (currentIndex > 0 && currentErrorCount <= 3) {
             Log.e(TAG, "ListHandler error: setting startPaused to false");
             setStartPaused(false);
         }
     }
 
-    @Override
-    public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, int reason) {
+   @Override
+    public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, @Player.DiscontinuityReason int reason) {
         super.onPositionDiscontinuity(oldPosition, newPosition, reason);
         Log.i(TAG, "onPositionDiscontinuity! " + newPosition.positionMs);
-        getCurrentMediaProgress().update(newPosition.positionMs, getCurrentPlaybackSpeed(), getDuration());
+        getCurrentMediaProgress().update(newPosition.positionMs, getPlaybackSpeed(), getDuration());
         onProgressUpdated(getCurrentMediaProgress());
         didSeekCatchup = false;
     }

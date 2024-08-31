@@ -14,34 +14,23 @@ import org.apache.cordova.PluginResult;
 import com.devbrackets.android.playlistcore.data.MediaProgress;
 import com.rolamix.plugins.audioplayer.data.AudioTrack;
 
-/**
- *
- * The core Cordova interface for the audio player
- * TODO: Move the proxied calls audioPlayerImpl.getPlaylistManager()
- * into the audio player class itself so the plugin doesn't know about
- * the playlist manager.
- *
- */
 public class AudioPlayerPlugin extends CordovaPlugin implements RmxConstants, OnStatusReportListener {
 
-  public static String TAG = "RmxAudioPlayer";
+    public static String TAG = "RmxAudioPlayer";
 
-  // PlaylistCore requires this but we don't use it
-  // It would be used to switch between playlists. I guess we could
-  // support that in the future, might be cool.
-  private OnStatusCallback statusCallback;
-  private RmxAudioPlayer audioPlayerImpl;
+    private OnStatusCallback statusCallback;
+    private RmxAudioPlayer audioPlayerImpl;
 
-  private boolean resetStreamOnPause = true;
+    private boolean resetStreamOnPause = true;
 
-  @Override
-  public void pluginInitialize() {
-    audioPlayerImpl = new RmxAudioPlayer(this, cordova);
-  }
+    @Override
+    public void pluginInitialize() {
+        audioPlayerImpl = new RmxAudioPlayer(this, cordova);
+    }
 
-  @Override
-  public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-    Log.i(TAG, "execute: " + action + ": ===> " + args.toString());
+    @Override
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        Log.i(TAG, "execute: " + action + ": ===> " + args.toString());
 
     // capture callback
     if (INITIALIZE.equals(action)) {
@@ -52,15 +41,15 @@ public class AudioPlayerPlugin extends CordovaPlugin implements RmxConstants, On
       return true;
     }
     if (SET_OPTIONS.equals(action)) {
-      JSONObject options = args.optJSONObject(0);
-      if (options == null) {
-        options = new JSONObject();
-      }
-      resetStreamOnPause = options.optBoolean("resetStreamOnPause", this.resetStreamOnPause);
-      audioPlayerImpl.setResetStreamOnPause(resetStreamOnPause);
-      // We don't do anything with these yet.
-      new PluginCallback(callbackContext).send(PluginResult.Status.OK, options);
-      return true;
+        JSONObject options = args.optJSONObject(0);
+        if (options == null) {
+            options = new JSONObject();
+        }
+        resetStreamOnPause = options.optBoolean("resetStreamOnPause", this.resetStreamOnPause);
+        audioPlayerImpl.setResetStreamOnPause(resetStreamOnPause);
+        // We don't do anything with these yet.
+        new PluginCallback(callbackContext).send(PluginResult.Status.OK, options);
+        return true;
     }
     if (RELEASE.equals(action)) {
       destroyResources();

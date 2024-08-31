@@ -1,15 +1,15 @@
 package com.rolamix.plugins.audioplayer;
 
 import android.util.Log;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.content.Context;
 
 import org.apache.cordova.CordovaInterface;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import __PACKAGE_NAME__.MainApplication;
+import com.teyuto.base.MainApplication;
 import com.rolamix.plugins.audioplayer.data.AudioTrack;
 import com.rolamix.plugins.audioplayer.manager.PlaylistManager;
 import com.rolamix.plugins.audioplayer.manager.MediaControlsListener;
@@ -20,34 +20,34 @@ import com.devbrackets.android.playlistcore.data.PlaylistItemChange;
 import com.devbrackets.android.playlistcore.listener.PlaylistListener;
 import com.devbrackets.android.playlistcore.listener.ProgressListener;
 import com.devbrackets.android.playlistcore.listener.PlaybackStatusListener;
-import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 
 public class RmxAudioPlayer implements PlaybackStatusListener<AudioTrack>,
           PlaylistListener<AudioTrack>, ProgressListener, Player.Listener, MediaControlsListener {
 
-  public static String TAG = "RmxAudioPlayer";
+    public static String TAG = "RmxAudioPlayer";
 
-  private static final int PLAYLIST_ID = 32;
-  private CordovaInterface cordova;
-  private PlaylistManager playlistManager;
-  private OnStatusReportListener statusListener;
+    private static final int PLAYLIST_ID = 32;
+    private CordovaInterface cordova;
+    private PlaylistManager playlistManager;
+    private OnStatusReportListener statusListener;
 
-  private int lastBufferPercent = 0;
-  private boolean trackDuration = false;
-  private boolean trackLoaded = false;
-  private boolean resetStreamOnPause = true;
+    private int lastBufferPercent = 0;
+    private boolean trackDuration = false;
+    private boolean trackLoaded = false;
+    private boolean resetStreamOnPause = true;
 
-  public RmxAudioPlayer(@NonNull OnStatusReportListener statusListener, @NonNull CordovaInterface cordova) {
-    this.cordova = cordova;
-    this.statusListener = statusListener;
+    public RmxAudioPlayer(@NonNull OnStatusReportListener statusListener, @NonNull CordovaInterface cordova) {
+        this.cordova = cordova;
+        this.statusListener = statusListener;
 
-    getPlaylistManager();
-    playlistManager.setId(PLAYLIST_ID);
-    playlistManager.setPlaybackStatusListener(this);
-    playlistManager.setErrorListener(this);
-    playlistManager.setMediaControlsListener(this);
-  }
+        getPlaylistManager();
+        playlistManager.setId(PLAYLIST_ID);
+        playlistManager.setPlaybackStatusListener(this);
+        playlistManager.setErrorListener(this);
+        playlistManager.setMediaControlsListener(this);
+    }
 
   public PlaylistManager getPlaylistManager() {
     Context app = cordova.getActivity().getApplicationContext();
@@ -58,24 +58,21 @@ public class RmxAudioPlayer implements PlaybackStatusListener<AudioTrack>,
   // ... [rest of the methods remain the same]
 
   @Override
-  public void onPlayerError(ExoPlaybackException error) {
-    String errorMsg = error.getMessage();
-    RmxAudioErrorType errorType = RmxAudioErrorType.RMXERR_NONE_SUPPORTED;
+  public void onPlayerError(PlaybackException error) {
+      String errorMsg = error.getMessage();
+      RmxAudioErrorType errorType = RmxAudioErrorType.RMXERR_NONE_SUPPORTED;
 
-    switch (error.type) {
-        case ExoPlaybackException.TYPE_SOURCE:
-            errorMsg = "ExoPlaybackException.TYPE_SOURCE: " + error.getSourceException().getMessage();
-            break;
-        case ExoPlaybackException.TYPE_RENDERER:
-            errorType = RmxAudioErrorType.RMXERR_DECODE;
-            errorMsg = "ExoPlaybackException.TYPE_RENDERER: " + error.getRendererException().getMessage();
-            break;
-        case ExoPlaybackException.TYPE_UNEXPECTED:
-            errorType = RmxAudioErrorType.RMXERR_DECODE;
-            errorMsg = "ExoPlaybackException.TYPE_UNEXPECTED: " + error.getUnexpectedException().getMessage();
-            break;
-    }
-
+      switch (error.getErrorCode()) {
+          case PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND:
+          case PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED:
+              errorType = RmxAudioErrorType.RMXERR_NETWORK;
+              break;
+          case PlaybackException.ERROR_CODE_DECODER_INIT_FAILED:
+          case PlaybackException.ERROR_CODE_DECODING_FAILED:
+              errorType = RmxAudioErrorType.RMXERR_DECODE;
+              break;
+          // ... handle other error codes as needed
+      }
     AudioTrack errorItem = playlistManager.getCurrentErrorTrack();
     String trackId = errorItem != null ? errorItem.getTrackId() : "INVALID";
 
