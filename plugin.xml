@@ -25,10 +25,6 @@
 
 	<!-- android -->
 	<platform name="android">
-    <hook type="after_prepare" src="scripts/android_after_plugin_install.js" />
-    <hook type="after_plugin_install" src="scripts/android_after_plugin_install.js"/>
-    <hook type="before_plugin_uninstall" src="scripts/android_before_plugin_uninstall.js" />
-
     <info>
         cordova-plugin-playlist adds a MainApplication.java file to your Android project and an Application to your app.
         If your app cannot use this, do not install this plugin.
