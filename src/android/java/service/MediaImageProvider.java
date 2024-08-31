@@ -15,14 +15,8 @@ import com.devbrackets.android.playlistcore.components.image.ImageProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// Because we are codegen'ing this to depend on the actual cordova app,
-// we can use R directly. Otherwise, we'd have to use the cordova activity,
-// but that would be a bit odd since this belongs to a service running
-// outside that activity. I'm not sure if that would work.
-// import __PACKAGE_NAME__.R;
 import com.rolamix.plugins.audioplayer.FakeR;
 import com.rolamix.plugins.audioplayer.data.AudioTrack;
-
 
 public class MediaImageProvider implements ImageProvider<AudioTrack> {
     interface OnImageUpdatedListener {
@@ -59,8 +53,6 @@ public class MediaImageProvider implements ImageProvider<AudioTrack> {
         fakeR = new FakeR(context.getApplicationContext());
         this.listener = listener;
 
-        // R.drawable.img_playlist_notif_default
-        // R.drawable.img_playlist_artwork_default
         defaultNotificationImage = BitmapFactory.decodeResource(context.getResources(), fakeR.getId("drawable", "img_playlist_notif_default"));
         defaultArtworkImage = BitmapFactory.decodeResource(context.getResources(), fakeR.getId("drawable", "img_playlist_artwork_default"));
     }
@@ -94,24 +86,17 @@ public class MediaImageProvider implements ImageProvider<AudioTrack> {
     }
 
     private int getMipmapIcon() {
-        // return R.mipmap.icon; // this comes from cordova itself.
         if (notificationIconId <= 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 notificationIconId = fakeR.getId("drawable", "ic_notification");
             }
             if (notificationIconId <= 0) {
-                notificationIconId = fakeR.getContext().getApplicationInfo().icon; //fakeR.getId("mipmap", "icon");
+                notificationIconId = fakeR.getContext().getApplicationInfo().icon;
             }
         }
         return notificationIconId;
     }
 
-    /**
-     * A class used to listen to the loading of the large notification images and perform
-     * the correct functionality to update the notification once it is loaded.
-     * <p>
-     * <b>NOTE:</b> This is a Glide Image loader class
-     */
     private class NotificationImageTarget extends SimpleTarget<Bitmap> {
         @Override
         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
@@ -120,12 +105,6 @@ public class MediaImageProvider implements ImageProvider<AudioTrack> {
         }
     }
 
-    /**
-     * A class used to listen to the loading of the large lock screen images and perform
-     * the correct functionality to update the artwork once it is loaded.
-     * <p>
-     * <b>NOTE:</b> This is a Glide Image loader class
-     */
     private class RemoteViewImageTarget extends SimpleTarget<Bitmap> {
         @Override
         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {

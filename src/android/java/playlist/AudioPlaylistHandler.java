@@ -10,7 +10,6 @@ import android.content.Context;
 import android.util.Log;
 
 import com.devbrackets.android.playlistcore.api.PlaylistItem;
-import com.devbrackets.android.playlistcore.api.MediaPlayerApi;
 import com.devbrackets.android.playlistcore.data.MediaProgress;
 import com.devbrackets.android.playlistcore.manager.BasePlaylistManager;
 import com.devbrackets.android.playlistcore.components.audiofocus.AudioFocusProvider;
@@ -22,9 +21,12 @@ import com.devbrackets.android.playlistcore.components.mediasession.DefaultMedia
 import com.devbrackets.android.playlistcore.components.mediasession.MediaSessionProvider;
 import com.devbrackets.android.playlistcore.components.playlisthandler.DefaultPlaylistHandler;
 
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.PlaybackException;
 
 public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylistManager<I>>
-            extends DefaultPlaylistHandler<I, M> {
+            extends DefaultPlaylistHandler<I, M> implements Player.Listener {
 
     private static final String TAG = "AudioPlaylistHandler";
     private boolean didSeekCatchup = false;
@@ -42,36 +44,22 @@ public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylist
     ) {
         super(context, serviceClass, playlistManager, imageProvider, notificationProvider,
                 mediaSessionProvider, mediaControlsProvider, audioFocusProvider, listener);
-        // Lmao this entire class exists for the sake of this one line
-        // The default value is 30fps (e.g 33ms), which would overwhelm the Cordova webview with messages
-        // Ideally we could make this configurable.
         getMediaProgressPoll().setProgressPollDelay(1000);
     }
 
     @Override
-    public void onPrepared(MediaPlayerApi<I> mediaPlayer) {
-        super.onPrepared(mediaPlayer);
+    public void onPlaybackStateChanged(int state) {
+        super.onPlaybackStateChanged(state);
+        // Handle playback state changes if needed
     }
 
     @Override
-    public void onBufferingUpdate(MediaPlayerApi<I> mediaPlayer, int percent) {
-        // super.onBufferingUpdate(mediaPlayer, percent);
-        // this super class appears to have a bug too.
-        // Makes sure to update listeners of buffer updates even when playback is paused
-        MediaProgress progress = getCurrentMediaProgress();
-        if (!mediaPlayer.isPlaying() && progress.getBufferPercent() != percent) {
-            progress.update(mediaPlayer.getCurrentPosition(), percent, mediaPlayer.getDuration());
-            onProgressUpdated(progress);
-        }
-    }
-
-    @Override
-    public boolean onError(MediaPlayerApi<I> mediaPlayer) {
+    public void onPlayerError(PlaybackException error) {
         ((PlaylistManager)getPlaylistManager()).setCurrentErrorTrack(getCurrentPlaylistItem());
         int currentIndex = getPlaylistManager().getCurrentPosition();
         int currentErrorCount = getSequentialErrors();
 
-        super.onError(mediaPlayer);
+        super.onPlayerError(error);
         // Do not set startPaused to false if we are at the first item.
         // For all other items, the user MUST have triggered playback;
         // for item 0, they will never have done so at this point (since the tracks
@@ -84,26 +72,27 @@ public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylist
             Log.e(TAG, "ListHandler error: setting startPaused to false");
             setStartPaused(false);
         }
-
-        return false;
     }
 
     @Override
-    public void onSeekComplete(MediaPlayerApi<I> mediaPlayer) {
-        Log.i(TAG, "onSeekComplete! " + mediaPlayer.getCurrentPosition());
-        getCurrentMediaProgress().update(mediaPlayer.getCurrentPosition(), mediaPlayer.getBufferedPercent(), mediaPlayer.getDuration());
-        super.onSeekComplete(mediaPlayer);
+    public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, int reason) {
+        super.onPositionDiscontinuity(oldPosition, newPosition, reason);
+        Log.i(TAG, "onPositionDiscontinuity! " + newPosition.positionMs);
+        getCurrentMediaProgress().update(newPosition.positionMs, getCurrentPlaybackSpeed(), getDuration());
+        onProgressUpdated(getCurrentMediaProgress());
         didSeekCatchup = false;
     }
 
     @Override
-    public void onCompletion(MediaPlayerApi<I> mediaPlayer) {
-        Log.i("AudioPlaylistHandler", "onCompletion");
+    public void onPlaybackStateChanged(int playbackState) {
+        super.onPlaybackStateChanged(playbackState);
+        Log.i("AudioPlaylistHandler", "onPlaybackStateChanged: " + playbackState);
         // This is called when a single item completes playback.
         // For now, the superclass does the right thing, but we may need to override.
-        super.onCompletion(mediaPlayer);
+        if (playbackState == Player.STATE_ENDED) {
+            onCompletion(getCurrentMediaItem());
+        }
     }
-
 
     @Override
     public void play() {
@@ -125,7 +114,6 @@ public class AudioPlaylistHandler<I extends PlaylistItem, M extends BasePlaylist
         setPlayingBeforeSeek(true);
         super.play();
     }
-
 
     @Override
     public void pause(boolean temporary) {

@@ -4,7 +4,7 @@ import __PACKAGE_NAME__.MainApplication;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.devbrackets.android.playlistcore.api.MediaPlayerApi;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.devbrackets.android.playlistcore.components.playlisthandler.PlaylistHandler;
 import com.devbrackets.android.playlistcore.service.BasePlaylistService;
 
@@ -13,17 +13,14 @@ import com.rolamix.plugins.audioplayer.manager.PlaylistManager;
 import com.rolamix.plugins.audioplayer.playlist.AudioApi;
 import com.rolamix.plugins.audioplayer.playlist.AudioPlaylistHandler;
 
-/**
- * A simple service that extends {@link BasePlaylistService} in order to provide
- * the application specific information required.
- */
 public class MediaService extends BasePlaylistService<AudioTrack, PlaylistManager> {
 
     @Override
     public void onCreate() {
         super.onCreate();
         // Adds the audio player implementation, otherwise there's nothing to play media with
-        AudioApi newAudio = new AudioApi(getApplicationContext());
+        ExoPlayer exoPlayer = new ExoPlayer.Builder(getApplicationContext()).build();
+        AudioApi newAudio = new AudioApi(getApplicationContext(), exoPlayer);
         newAudio.addErrorListener(getPlaylistManager());
         getPlaylistManager().getMediaPlayers().add(newAudio);
         getPlaylistManager().onMediaServiceInit(true);
@@ -33,8 +30,8 @@ public class MediaService extends BasePlaylistService<AudioTrack, PlaylistManage
     public void onDestroy() {
         super.onDestroy();
 
-        // Releases and clears all the MediaPlayersMediaImageProvider
-        for (MediaPlayerApi<AudioTrack> player : getPlaylistManager().getMediaPlayers()) {
+        // Releases and clears all the MediaPlayers
+        for (ExoPlayer player : getPlaylistManager().getMediaPlayers()) {
             player.release();
         }
 
@@ -59,7 +56,7 @@ public class MediaService extends BasePlaylistService<AudioTrack, PlaylistManage
 
         AudioPlaylistHandler.Listener<AudioTrack> listener = new AudioPlaylistHandler.Listener<AudioTrack>() {
             @Override
-            public void onMediaPlayerChanged(MediaPlayerApi<AudioTrack> oldPlayer, MediaPlayerApi<AudioTrack> newPlayer) {
+            public void onMediaPlayerChanged(ExoPlayer oldPlayer, ExoPlayer newPlayer) {
                 getPlaylistManager().onMediaPlayerChanged(newPlayer);
             }
 

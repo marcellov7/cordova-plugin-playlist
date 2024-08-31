@@ -30,6 +30,6 @@ public class PlaylistNotificationProvider extends DefaultPlaylistNotificationPro
                 FLAG_ACTIVITY_REORDER_TO_FRONT | FLAG_ACTIVITY_SINGLE_TOP);
 
         return PendingIntent.getActivity(this.getContext(),
-                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }
